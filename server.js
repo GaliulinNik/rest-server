@@ -1,10 +1,13 @@
 const bodyParser = require("body-parser");
 const express = require("express");
+const favicon = require("serve-favicon");
 const app = express();
 const path = require("path");
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); //стандартный модуль, для парсинга JSON в запросах
+app.use(bodyParser.json()); //стандартный модуль, для парсинга JSON в запросах
+app.use(favicon(__dirname + "/public/images/favicon.ico")); // отдаем стандартную фавиконку, можем здесь же свою задать
+app.use(express.static(path.join(__dirname, "public"))); // запуск статического файлового сервера, который смотрит на папку public/ (в нашем случае отдает index.html)
 
 //--------подключение БД------------------
 const dbConfig = require("./config/database.config");
@@ -22,37 +25,31 @@ mongoose
     process.exit();
   });
 //-----------------------------------------
+//--------Обработка ошибок 404, 500------------------
+// app.use(function (req, res, next) {
+//   res.status(404);
+//   console.log("Not found URL: %s", req.url);
+//   res.send({ error: "Not found" });
+//   return;
+// });
 
-app.use(express.static(path.join(__dirname, "public")));
-
-app.all("/", function (request, response, next) {
-  response.header("Access-Control-Allow-Origin", "*");
-  response.header("Access-Control-Allow-Headers", "X-Requested-With");
-  response.header(
-    "Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS"
-  );
-  response.header(
-    "Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token"
-  );
-  response.header("Access-Control-Max-Age: 86400");
-  next();
-});
-
+// app.use(function (err, req, res, next) {
+//   res.status(err.status || 500);
+//   console.log(`Internal error(%d): %s ${res.statusCode} ${err.message}`);
+//   res.send({ error: err.message });
+//   return;
+// });
+//-----------------------------------------
 app.get("/", (request, response) => {
   response.send({ message: "Наш сервис" });
 });
 
 app.get("/login", (request, response) => {
-  response.header("Access-Control-Allow-Origin", "*");
-  response.header("Access-Control-Allow-Headers", "X-Requested-With");
   response.sendFile(`${__dirname}/public/index.html`);
 });
 
 app.post("/api/login", (request, response) => {
   console.log("request.body=====", request.body);
-
-  response.header("Access-Control-Allow-Origin", "*");
-  response.header("Access-Control-Allow-Headers", "X-Requested-With");
 });
 
 app.get("/main", (request, response) => {
@@ -84,6 +81,7 @@ app.delete("/articles/article/:id", (request, response) => {
   }
 });
 
+//--------Создание веб-сервера-----------------
 const PORT = 4040;
 
 app.listen(PORT, () => {
